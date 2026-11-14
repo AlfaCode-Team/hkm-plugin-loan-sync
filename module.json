@@ -1,0 +1,89 @@
+{
+    "name": "loan-sync",
+    "version": "1.0.0",
+    "kernel": "^1.21.0",
+    "solves": "sync.offline",
+    "type": "module",
+    "requires": [
+        "database.management"
+    ],
+    "exposes": [
+        "Plugins\\LoanSync\\API\\Contracts\\SyncServiceContract",
+        "Plugins\\LoanSync\\API\\Contracts\\SyncRevisionContract",
+        "Plugins\\LoanSync\\API\\Contracts\\AttachmentServiceContract"
+    ],
+    "routePrefix": "/api/sync",
+    "routeFilters": [
+        "auth"
+    ],
+    "routes": [
+        {
+            "method": "POST",
+            "path": "/device",
+            "handler": "Plugins\\LoanSync\\Infrastructure\\Http\\Controllers\\SyncController@register",
+            "name": "sync.device"
+        },
+        {
+            "method": "POST",
+            "path": "/shard",
+            "handler": "Plugins\\LoanSync\\Infrastructure\\Http\\Controllers\\SyncController@shard",
+            "name": "sync.shard"
+        },
+        {
+            "method": "POST",
+            "path": "/push",
+            "handler": "Plugins\\LoanSync\\Infrastructure\\Http\\Controllers\\SyncController@push",
+            "name": "sync.push",
+            "filters": [
+                "throttle:120,1"
+            ]
+        },
+        {
+            "method": "POST",
+            "path": "/attachment",
+            "handler": "Plugins\\LoanSync\\Infrastructure\\Http\\Controllers\\AttachmentController@store",
+            "name": "sync.attachment.store",
+            "requires": [
+                "storage.local",
+                "file.sanitization",
+                "file.scanning"
+            ],
+            "filters": [
+                "throttle:30,1"
+            ]
+        },
+        {
+            "method": "GET",
+            "path": "/attachment/{id:num}",
+            "handler": "Plugins\\LoanSync\\Infrastructure\\Http\\Controllers\\AttachmentController@show",
+            "name": "sync.attachment.show",
+            "requires": [
+                "storage.local",
+                "file.sanitization",
+                "file.scanning"
+            ],
+            "filters": [
+                "throttle:120,1"
+            ]
+        },
+        {
+            "method": "GET",
+            "path": "/pull",
+            "handler": "Plugins\\LoanSync\\Infrastructure\\Http\\Controllers\\SyncController@pull",
+            "name": "sync.pull",
+            "filters": [
+                "throttle:240,1"
+            ]
+        }
+    ],
+    "emits": [],
+    "documentation": "Offline-first sync between the server (source of truth) and a handset (replica). Push applies a device outbox idempotently by op_id, one transaction per operation; pull returns a delta above a rev cursor and never advances that cursor past a row it did not hand over. Tables live in the project's tenant template, not here.",
+    "config": [
+        {
+            "key": "ATTACHMENT_MAX_BYTES",
+            "type": "int",
+            "required": false,
+            "default": 8388608
+        }
+    ]
+}
