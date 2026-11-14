@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 — 2026-11-14
+
+- Remove `.git-msg`, a commit-message scratch file that was staged into the
+  first commit and so shipped inside v1.0.0. No code change.
+
 ## 1.0.0 — 2026-11-14
 
 First release. Extracted from the akasente project, where it was developed as a
